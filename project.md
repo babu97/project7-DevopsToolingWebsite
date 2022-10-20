@@ -276,7 +276,7 @@ its located in
 
 `var/log/httpd`
 
-8. Fork the tooling source code from [https://github.com/darey-io/tooling][Darey.io Github Account] to your Github account. ([https://www.youtube.com/watch?v=f5grYMXbAV0&feature=youtu.be][learn how to fork a repo here])
+8. Fork the tooling source code from[Darey.io Github Account](https://github.com/darey-io/tooling) to your Github account. [learn how to fork a repo here](https://www.youtube.com/watch?v=f5grYMXbAV0&feature=youtu.be)
 
 use
 
