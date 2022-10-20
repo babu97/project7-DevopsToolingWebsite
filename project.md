@@ -230,27 +230,21 @@ add following line
 172-31-80-160:/mnt/logs /var/log/httpd nfs defaults 0 0
 `
 
-5.Install [http://www.servermom.org/how-to-enable-remi-repo-on-centos-7-6-and-5/2790/][Remi’s repository], Apache and PHP
+5.Install [Remi’s repository](http://www.servermom.org/how-to-enable-remi-repo-on-centos-7-6-and-5/2790/), Apache and PHP
+
 
 `
 sudo yum install httpd -y
-
 sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-
 sudo dnf install dnf-utils http://rpms.remirepo.net/enterprise/remi-release-8.rpm
-
 sudo dnf module reset php
-
 sudo dnf module enable php:remi-7.4
-
 sudo dnf install php php-opcache php-gd php-curl php-mysqlnd
-
 sudo systemctl start php-fpm
-
 sudo systemctl enable php-fpm
-
 setsebool -P httpd_execmem 1
 `
+
 6. Verify that Apache files and directories are available on the Web Server in /var/www and also on the NFS server in /mnt/apps. If you see the same files – it means NFS is mounted correctly. You can try to create a new file touch test.txt from one server and check if the same file is accessible from other Web Servers.
 
 7. Locate the log folder for Apache on the Web Server and mount it to NFS server’s export for logs. Repeat step №4 to make sure the mount point will persist after reboot.
