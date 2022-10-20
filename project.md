@@ -33,18 +33,22 @@ then select n for new partion, ? for options and P  to check Partion summary
 **Note**: Previously, in Ubuntu we used apt command to install packages, in RedHat/CentOS a different package manager is used, so we shall use yum command instead.
 
 8.Use pvcreate utility to mark each of 3 disks as physical volumes (PVs) to be used by LVM
+
 `
 sudo pvcreate /dev/xvdf1
 sudo pvcreate /dev/xvdg1
 sudo pvcreate /dev/xvdh1
 `
+
 9 Verify that your Physical volume has been created successfully by running *sudo pvs*
 
 ![](/pvs.png)
 10 Use vgcreate utility to add all 3 PVs to a volume group (VG). Name the VG webdata-vg
+
 `
 sudo vgcreate webdata-vg /dev/xvdh1 /dev/xvdg1 /dev/xvdf1
 `
+
 11 Verify that your VG has been created successfully by running *sudo vgs*
 
 12 Use lvcreate utility to create 3 logical volumes. **lv-opt lv-apps and lv-logs** 
@@ -53,6 +57,8 @@ sudo lvcreate -n lv-apps -L 9G webdata-vg
 sudo lvcreate -n lv-logs -L 9G webdata-vg
 sudo lvcreate -n lv-opt -L  9G webdata-vg 
 `
+
+
 verify that it has been created successfully by running
 `
 sudo lvs
@@ -72,6 +78,7 @@ sudo mkfs -t xfs /dev/webdata-vg/lv-apps
 sudo mkfs -t xfs /dev/webdata-vg/lv-logs
 sudo mkfs -t xfs /dev/webdata-vg/lv-opt
 `
+
 create mount points on **/mnt**  directory for the logical volumes as follow:
 
 Mount *lv-apps* on */mnt/apps* – To be used by webservers
@@ -98,6 +105,7 @@ sudo systemctl start nfs-server.service
 sudo systemctl enable nfs-server.service
 sudo systemctl status nfs-server.service
 `
+
 Export the mounts for webservers’ subnet cidr to connect as clients. For simplicity, you will install your all three Web Servers inside the same subnet, but in production set up you would probably want to separate each tier inside its own subnet for higher level of security.
 To check your subnet cidr – open your EC2 details in AWS web console and locate ‘Networking’ tab and open a Subnet link
 
@@ -116,8 +124,11 @@ sudo chmod -R 777 /mnt/opt
 
 sudo systemctl restart nfs-server.service
 `
+
+
 Configure access to NFS for clients within the same subnet
 `
+
 sudo vi /etc/exports
 
 /mnt/apps <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
@@ -128,10 +139,14 @@ Esc + :wq!
 
 sudo exportfs -arv
 `
+
 Check which port is used by NFS and open it using Security Groups (add new Inbound Rule)
+
+
 `
 rpcinfo -p | grep nfs
 `
+
 **Important note:** In order for NFS server to be accessible from your client, you must also open following ports: TCP 111, UDP 111, UDP 2049
 
 ![](/nfs_port_open.png)
@@ -140,28 +155,37 @@ rpcinfo -p | grep nfs
 
 By now you should know how to install and configure a MySQL DBMS to work with remote Web Server
 1.install mySQL SERVER 
+
+
 `
 sudo apt update
 sudo apt install mysql-server
 `
+
 Verify that the service is up and running by using sudo systemctl status mysqld, if it is not running, restart the service and enable it so it will be running even after reboot
+
 `
 sudo systemctl restart mysql
 sudo systemctl enable mysql
 `
+
 Create a database and name it **tooling**
+
 `
 sudo mysql 
 CREATE DATABASE tooling 
 `
 
+
 Create a database user and name it webaccess and grant all permissions on tooling website
+
 
 `
 CREATE USER `webaccess`@`172-31-84-0/24 ` IDENTIFIED BY 'Babu@1995';
 
 GRANT ALL ON tooling.* TO 'webaccess'@'%';
 `
+
 ### STEP 3 PREPARE THE WEB SERVERS 
 We need to make sure that our Web Servers can serve the same content from shared storage solutions, in our case – NFS Server and MySQL database.
 You already know that one DB can be accessed for reads and writes by multiple clients. For storing shared files that our Web Servers will use – we will utilize NFS and mount previously created Logical Volume lv-apps to the folder where Apache stores files to be served to the users (/var/www).
@@ -175,27 +199,38 @@ During the next steps we will do following:
 * Configure the Web Servers to work with a single MySQL database
 1. Launch a new EC2 instance with RHEL 8 Operating System
 2. Install NFS client
+
 `
 sudo yum install nfs-utils nfs4-acl-tools -y
 `
+
 3. 
 Mount /var/www/ and target the NFS server’s export for apps
+
 `
 sudo mkdir /var/www
 sudo mount -t nfs -o rw,nosuid 172.31.80.160:/mnt/apps /var/www
 
 sudo mount -t nfs -o rw,nosuid 172.31.80.160:/mnt/logs /var/log/httpd
 `
+
+
 4. Verify that NFS was mounted successfully by running df -h. Make sure that the changes will persist on Web Server after reboot:
+
+
 `
 sudo vi /etc/fstab
 `
+
 add following line
+
+
 `
 172-31-80-160:/mnt/apps /var/www nfs defaults 0 0
 172-31-80-160:/mnt/logs /var/log/httpd nfs defaults 0 0
 `
-5.Install [Remi’s repository][http://www.servermom.org/how-to-enable-remi-repo-on-centos-7-6-and-5/2790/], Apache and PHP
+
+5.Install [http://www.servermom.org/how-to-enable-remi-repo-on-centos-7-6-and-5/2790/][Remi’s repository], Apache and PHP
 
 `
 sudo yum install httpd -y
@@ -219,11 +254,14 @@ setsebool -P httpd_execmem 1
 6. Verify that Apache files and directories are available on the Web Server in /var/www and also on the NFS server in /mnt/apps. If you see the same files – it means NFS is mounted correctly. You can try to create a new file touch test.txt from one server and check if the same file is accessible from other Web Servers.
 
 7. Locate the log folder for Apache on the Web Server and mount it to NFS server’s export for logs. Repeat step №4 to make sure the mount point will persist after reboot.
-its located in `var/log/httpd`
+its located in
 
-8. Fork the tooling source code from [Darey.io Github Account][https://github.com/darey-io/tooling] to your Github account. ([Learn how to fork a repo here][https://www.youtube.com/watch?v=f5grYMXbAV0&feature=youtu.be])
+`var/log/httpd`
 
-uset 
+8. Fork the tooling source code from [https://github.com/darey-io/tooling][Darey.io Github Account] to your Github account. ([https://www.youtube.com/watch?v=f5grYMXbAV0&feature=youtu.be][learn how to fork a repo here])
+
+use
+
 `
 git clone https://github.com/darey-io/tooling
 `
@@ -246,7 +284,7 @@ INSERT INTO ‘users’ (‘id’, ‘username’, ‘password’, ’email’, 
 -> (1, ‘myuser’, ‘5f4dcc3b5aa765d61d8327deb882cf99’, ‘user@mail.com’, ‘admin’, ‘1’);
 `
 
-Open the website in your browser http://<Web-Server-Public-IP-Address-or-Public-DNS-Name>/index.php and make sure you can login into the websute with myuser user.
+Open the website in your browser http://<Web-Server-Public-IP-Address-or-Public-DNS-Name>/index.php and make sure you can login into the website with myuser user.
 
 
 ![](/admin%20page.PNG)
