@@ -12,6 +12,8 @@ Based on your LVM experience from Project 6, Configure LVM on the Server
 ![](/attach_volume.png)
 
 3.Use `lsblk `command to inspect what block devices are attached to the server. Notice names of your newly created devices. All devices in Linux reside in /dev/ directory. Inspect it with ls /dev/ and make sure you see all 3 newly created block devices there – their names will likely be xvdf, xvdh, xvdg.
+
+
 ![](/lsblk.png)
 
 4.Use df -h command to see all mounts and free space on your server
@@ -43,6 +45,8 @@ sudo pvcreate /dev/xvdh1
 9 Verify that your Physical volume has been created successfully by running *sudo pvs*
 
 ![](/pvs.png)
+
+
 10 Use vgcreate utility to add all 3 PVs to a volume group (VG). Name the VG webdata-vg
 
 `
@@ -54,12 +58,20 @@ sudo vgcreate webdata-vg /dev/xvdh1 /dev/xvdg1 /dev/xvdf1
 12 Use lvcreate utility to create 3 logical volumes. **lv-opt lv-apps and lv-logs** 
 `
 sudo lvcreate -n lv-apps -L 9G webdata-vg
+`
+
+`
 sudo lvcreate -n lv-logs -L 9G webdata-vg
+`
+
+`
 sudo lvcreate -n lv-opt -L  9G webdata-vg 
 `
 
 
 verify that it has been created successfully by running
+
+
 `
 sudo lvs
 `
@@ -75,7 +87,13 @@ sudo vgdisplay -v
 
 `
 sudo mkfs -t xfs /dev/webdata-vg/lv-apps
+`
+
+`
 sudo mkfs -t xfs /dev/webdata-vg/lv-logs
+`
+
+`
 sudo mkfs -t xfs /dev/webdata-vg/lv-opt
 `
 
@@ -88,11 +106,29 @@ Mount *lv-opt* on */mnt/opt* – To be used by Jenkins server
 before create directories for apps logs and opt under mnt directory  
 `
 sudo mkdir mnt
+`
+
+`
 sudo mkdir /mnt/apps
+`
+
+`
 sudo mkdir /mnt/logs
+`
+
+`
 sudo mkdir /mnt/opt
+`
+
+`
 sudo mount /dev/webdata-vg/lv-apps /mnt/apps
+`
+
+`
 sudo mount /dev/webdata-vg/lv-logs /mnt/logs
+`
+
+`
 sudo mount /dev/webdata-vg/lv-opt /mnt/opt
 `
 
@@ -100,9 +136,19 @@ sudo mount /dev/webdata-vg/lv-opt /mnt/opt
 
 `
 sudo yum -y update
+`
+`
 sudo yum install nfs-utils -y
+`
+`
 sudo systemctl start nfs-server.service
+`
+
+`
 sudo systemctl enable nfs-server.service
+`
+
+`
 sudo systemctl status nfs-server.service
 `
 
@@ -115,28 +161,44 @@ Make sure we set up permission that will allow our Web servers to read, write an
 
 `
 sudo chown -R nobody: /mnt/apps
+`
+
+`
 sudo chown -R nobody: /mnt/logs
+`
+
+`
 sudo chown -R nobody: /mnt/opt
+`
 
+`
 sudo chmod -R 777 /mnt/apps
+`
+`
 sudo chmod -R 777 /mnt/logs
+`
+`
 sudo chmod -R 777 /mnt/opt
+`
 
+`
 sudo systemctl restart nfs-server.service
 `
 
 
 Configure access to NFS for clients within the same subnet
+
+`
+sudo vi /etc/exports
 `
 
-sudo vi /etc/exports
-
+`
 /mnt/apps <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
 /mnt/logs <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
 /mnt/opt <Subnet-CIDR>(rw,sync,no_all_squash,no_root_squash)
+`
 
-Esc + :wq!
-
+`
 sudo exportfs -arv
 `
 
@@ -159,6 +221,7 @@ By now you should know how to install and configure a MySQL DBMS to work with re
 
 `
 sudo apt update
+
 sudo apt install mysql-server
 `
 
@@ -166,6 +229,7 @@ Verify that the service is up and running by using sudo systemctl status mysqld,
 
 `
 sudo systemctl restart mysql
+
 sudo systemctl enable mysql
 `
 
@@ -182,6 +246,7 @@ Create a database user and name it webaccess and grant all permissions on toolin
 
 `
 CREATE USER `webaccess`@`172-31-84-0/24 ` IDENTIFIED BY 'Babu@1995';
+
 
 GRANT ALL ON tooling.* TO 'webaccess'@'%';
 `
